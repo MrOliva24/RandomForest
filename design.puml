@@ -1,0 +1,126 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+abstract class RandomForest {
+    - num_trees : int
+    - min_size : int
+    - max_depth : int
+    - ratio_samples : float
+    - num_random_features : int
+    - criterion : Impurity
+    + fit (X : float[][], y : float[])
+    + predict (X : float[]) : float[]
+    - make_decision_trees (dataset : Dataset)
+    - make_node (dataset : Dataset, depth : int) : Node
+    - make_leaf (dataset : Dataset, depth : int) : Leaf
+    - make_parent_or_leaf (dataset : Dataset, depth:  int) : Node
+    - best_split (idx_features : int[], dataset : Dataset) : int[]
+    - CART_cost (left_dataset : Dataset, right_dataset : Dataset) : float
+    - impurity (dataset) : float
+    - target (dataset, nproc) : Node
+    + feature_importance () : float[]
+    + print_trees ()
+    # {abstract} combine_predictions (predictions : float[] )
+    # {abstract} make_leaf (dataset : Dataset) : Leaf
+}
+
+class RandomForestClassifier {
+    # combine_predictions (predictions : float[]) : float
+    # make_leaf (dataset : Dataset, depth : int) : Leaf
+}
+
+class RandomForestRegressor{
+    # combine_predictions (predictions : float[]) : float
+    # make_leaf (dataset : Dataset, depth : int) : Leaf
+}
+
+class IsolationForest{
+
+    # combine_predictions (predictions : float[]) : float
+    # make_leaf (dataset : Dataset) : Leaf
+    - fit (X : float[][])
+    - make_node (dataset : Dataset, depth : int) : Node
+    - best_split (idx_features : int, dataset : Dataset)
+    + predict (X : float[]) : float[]
+}
+
+interface Impurity {
+    + {abstract} compute (dataset)
+}
+
+class Gini {
+    + compute (dataset : Dataset) : float
+}
+
+class Entropy {
+    + compute (dataset : Dataset) : float
+}
+
+class SSE {
+    + compute (dataset : Dataset) : float
+}
+
+interface Node {
+    + {abstract} predict (X : float[])
+}
+
+class Parent {
+    - feature_index : int
+    - threshold : float
+    + predict (X : float[]) : int
+}
+
+class Leaf {
+    - label : float
+    + predict (X : float[]) : int
+}
+
+class Dataset {
+    - X : float[][]
+    - y : int
+    - num_samples : int
+    - num_features : int
+    + random_sampling (ratio_samples : float) : Dataset
+    + most_frequent_label () : int
+    + distribution () : float[]
+    + split (idx : int, val : float)
+    + mean_value () : float
+}
+
+interface Visitor {
+    + {abstract} visitParent (parent : Parent)
+    + {abstract} visitLeaf (leaf : Leaf)
+}
+
+class FeatureImportance {
+    - ocurrences : dictionary
+    + visitParent (parent : Parent)
+    + visitLeaf (leaf : Leaf)
+}
+
+class PrinterTree {
+    - depth : int
+    + visitParent (parent : Parent)
+    + visitLeaf (leaf : Leaf)
+}
+
+
+RandomForest *-down-> Node : decision_trees "1..."
+RandomForest *-left-> Impurity : impurity "1"
+Parent ..up|> Node
+Leaf ..up|> Node
+RandomForestClassifier --up|> RandomForest
+RandomForestRegressor --up|> RandomForest
+IsolationForest --up|> RandomForest
+
+Gini ..up|> Impurity
+Entropy ..up|> Impurity
+SSE ..up|> Impurity
+
+Parent --up> Node : right_dataset
+Parent  --up> Node : left_dataset
+
+FeatureImportance ..up|> Visitor
+PrinterTree ..up|> Visitor
+
+@enduml
